@@ -1,9 +1,9 @@
-// TabViewController.swift
+// MainTabViewController.swift
 // Copyright © RoadMap. All rights reserved.
 
 import UIKit
 /// TabViewController контроллер табов в дальнейшем планирую певерсти в табы и добавить еще табы
-final class TabViewController: UITabBarController {
+final class MainTabViewController: UITabBarController {
     // MARK: - Life cycle
 
     override func viewDidLoad() {
@@ -17,8 +17,8 @@ final class TabViewController: UITabBarController {
         let searchViewController = SearchViewController()
         let itemOne = UITabBarItem(
             title: "Search",
-            image: UIImage(systemName: "magnifyingglass"),
-            selectedImage: UIImage(systemName: "magnifyingglass")
+            image: UIImage(systemName: Constants.searchIconName),
+            selectedImage: UIImage(systemName: Constants.searchIconName)
         )
         searchViewController.tabBarItem = itemOne
         viewControllers = [searchViewController]

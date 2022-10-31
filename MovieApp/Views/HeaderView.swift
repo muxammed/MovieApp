@@ -6,18 +6,11 @@ import UIKit
 final class HeaderView: UICollectionReusableView {
     // MARK: - Visual components
 
-    lazy var movieCover: UIImageView = {
-        let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFill
-        return imageView
-    }()
+    private let gradientView = UIView()
+    private let gradientLayer = CAGradientLayer()
 
-    let gradientView = UIView()
-    let gradient = CAGradientLayer()
-
-    let movieName: UILabel = {
+    private let movieNameLabel: UILabel = {
         let label = UILabel()
-        label.text = "Movie Name"
         label.textColor = .white
         label.font = UIFont(name: Constants.chilliMedium, size: 40)
         label.alpha = 0
@@ -26,27 +19,25 @@ final class HeaderView: UICollectionReusableView {
         return label
     }()
 
-    let movieGenres: UILabel = {
+    private let movieGenresLabel: UILabel = {
         let label = UILabel()
-        label.text = "Action"
         label.textColor = .white
         label.font = UIFont(name: Constants.gilroyMedium, size: 14)
         label.alpha = 0
         return label
     }()
 
-    let movieYear: UILabel = {
+    private let movieYearLabel: UILabel = {
         let label = UILabel()
-        label.text = "2022 USA"
         label.textColor = .white
         label.font = UIFont(name: Constants.gilroyMedium, size: 14)
         label.alpha = 0
         return label
     }()
 
-    let timeIcon: UIImageView = {
+    private let timeIconImageView: UIImageView = {
         let label = UIImageView()
-        label.image = UIImage(systemName: "clock")
+        label.image = UIImage(systemName: Constants.clockImageName)
         label.contentMode = .scaleAspectFit
         label.clipsToBounds = true
         label.tintColor = .white
@@ -54,25 +45,23 @@ final class HeaderView: UICollectionReusableView {
         return label
     }()
 
-    let movieDuration: UILabel = {
+    private let movieDurationLabel: UILabel = {
         let label = UILabel()
-        label.text = "2 h 56 min"
         label.textColor = .white
         label.font = UIFont(name: Constants.gilroyMedium, size: 14)
         label.alpha = 0
         return label
     }()
 
-    let voteLabel: UILabel = {
+    private let voteLabel: UILabel = {
         let label = UILabel()
-        label.text = "8.7"
         label.textColor = .white
         label.font = UIFont(name: Constants.gilroySemibold, size: 15)
         label.alpha = 0
         return label
     }()
 
-    lazy var ratingView: FloatRatingView = {
+    private lazy var ratingView: FloatRatingView = {
         let ratingView = FloatRatingView()
         ratingView.contentMode = .scaleAspectFit
         ratingView.fullImage = UIImage(named: "star")
@@ -86,7 +75,7 @@ final class HeaderView: UICollectionReusableView {
         return ratingView
     }()
 
-    let watchButton: UIButton = {
+    private let watchButton: UIButton = {
         let button = UIButton()
         let attrs = [
             NSAttributedString.Key.font: UIFont(name: Constants.chilliMedium, size: 17),
@@ -98,7 +87,7 @@ final class HeaderView: UICollectionReusableView {
         return button
     }()
 
-    let downloadImage: UIImageView = {
+    private let downloadImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(systemName: "arrow.down.to.line")
         imageView.tintColor = .white
@@ -106,7 +95,7 @@ final class HeaderView: UICollectionReusableView {
         return imageView
     }()
 
-    let bookmarkImage: UIImageView = {
+    private let bookmarkImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(systemName: "bookmark")
         imageView.tintColor = .white
@@ -114,7 +103,7 @@ final class HeaderView: UICollectionReusableView {
         return imageView
     }()
 
-    lazy var logoImage: UIImageView = {
+    private lazy var logoImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = true
@@ -122,9 +111,17 @@ final class HeaderView: UICollectionReusableView {
         return imageView
     }()
 
-    // MARK: - Public properties
+    // MARK: - Public Properties
 
-    var animator2: UIViewPropertyAnimator!
+    public lazy var movieCoverImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        return imageView
+    }()
+
+    // MARK: - Private properties
+
+    private var propertyAnimator: UIViewPropertyAnimator!
 
     // MARK: - Initialisators
 
@@ -142,35 +139,82 @@ final class HeaderView: UICollectionReusableView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        let gradientHeight = movieCover.frame.height / 2
+        setupGradientView()
+    }
 
-        NSLayoutConstraint.activate([
-            gradientView.leadingAnchor.constraint(equalTo: movieCover.leadingAnchor),
-            gradientView.bottomAnchor.constraint(equalTo: movieCover.bottomAnchor),
-            gradientView.trailingAnchor.constraint(equalTo: movieCover.trailingAnchor),
-            gradientView.heightAnchor.constraint(equalToConstant: gradientHeight)
-        ])
+    public func setAnimationFraction(value: CGFloat) {
+        propertyAnimator.fractionComplete = value
+    }
 
-        gradient.frame = gradientView.bounds
-        gradient.colors = [UIColor.clear.cgColor, UIColor.black.cgColor, UIColor.black.cgColor]
-        let point4 = 0.0
-        let point1 = 0.3
-        let point2 = 0.8
-        let point3 = 1.0
-        gradient.locations = [point4 as NSNumber, point2 as NSNumber, point3 as NSNumber]
-        gradientView.layer.insertSublayer(gradient, at: 0)
+    public func stopAnimation(value: Bool) {
+        propertyAnimator.stopAnimation(value)
+    }
+
+    public func setupValues(with data: MovieDetails) {
+        var genresString = ""
+        for genre in data.genres {
+            genresString += "\(genre.name)  "
+        }
+        movieGenresLabel.text = genresString
+        ratingView.rating = data.voteAverage / 2
+        let rounded = Double(round(10 * data.voteAverage) / 10)
+        let splited = data.releaseDate.split(separator: "-")
+        movieYearLabel.text = "\(splited[0]) USA"
+        voteLabel.text = "\(rounded)"
+    }
+
+    public func setDownloadImageUrl(imageUrl: String) {
+        logoImageView.downloaded(
+            from: imageUrl,
+            contentMode: .scaleAspectFit
+        )
+    }
+
+    public func setupTextValues(movie: MovieShortDetails) {
+        movieNameLabel.text = movie.title
+        ratingView.rating = movie.voteAverage / 2
+    }
+
+    public func setAlpha(to: CGFloat) {
+        movieNameLabel.alpha = to
+        movieGenresLabel.alpha = to
+        logoImageView.alpha = to
+        movieYearLabel.alpha = to
+        movieDurationLabel.alpha = to
+        timeIconImageView.alpha = to
+        voteLabel.alpha = to
+        ratingView.alpha = to
     }
 
     // MARK: - Private methods
 
-    private func addCoverImage() {
-        addSubview(movieCover)
-        movieCover.translatesAutoresizingMaskIntoConstraints = false
+    private func setupGradientView() {
+        let gradientHeight = movieCoverImageView.frame.height / 2
+
         NSLayoutConstraint.activate([
-            movieCover.topAnchor.constraint(equalTo: topAnchor),
-            movieCover.leadingAnchor.constraint(equalTo: leadingAnchor),
-            movieCover.bottomAnchor.constraint(equalTo: bottomAnchor),
-            movieCover.trailingAnchor.constraint(equalTo: trailingAnchor),
+            gradientView.leadingAnchor.constraint(equalTo: movieCoverImageView.leadingAnchor),
+            gradientView.bottomAnchor.constraint(equalTo: movieCoverImageView.bottomAnchor),
+            gradientView.trailingAnchor.constraint(equalTo: movieCoverImageView.trailingAnchor),
+            gradientView.heightAnchor.constraint(equalToConstant: gradientHeight)
+        ])
+
+        gradientLayer.frame = gradientView.bounds
+        gradientLayer.colors = [UIColor.clear.cgColor, UIColor.black.cgColor, UIColor.black.cgColor]
+        let point4 = 0.0
+        let point2 = 0.8
+        let point3 = 1.0
+        gradientLayer.locations = [point4 as NSNumber, point2 as NSNumber, point3 as NSNumber]
+        gradientView.layer.insertSublayer(gradientLayer, at: 0)
+    }
+
+    private func addCoverImage() {
+        addSubview(movieCoverImageView)
+        movieCoverImageView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            movieCoverImageView.topAnchor.constraint(equalTo: topAnchor),
+            movieCoverImageView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            movieCoverImageView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            movieCoverImageView.trailingAnchor.constraint(equalTo: trailingAnchor),
         ])
     }
 
@@ -179,12 +223,12 @@ final class HeaderView: UICollectionReusableView {
         visualEffectView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(visualEffectView)
         NSLayoutConstraint.activate([
-            visualEffectView.topAnchor.constraint(equalTo: movieCover.topAnchor),
-            visualEffectView.leadingAnchor.constraint(equalTo: movieCover.leadingAnchor),
-            visualEffectView.bottomAnchor.constraint(equalTo: movieCover.bottomAnchor),
-            visualEffectView.trailingAnchor.constraint(equalTo: movieCover.trailingAnchor),
+            visualEffectView.topAnchor.constraint(equalTo: movieCoverImageView.topAnchor),
+            visualEffectView.leadingAnchor.constraint(equalTo: movieCoverImageView.leadingAnchor),
+            visualEffectView.bottomAnchor.constraint(equalTo: movieCoverImageView.bottomAnchor),
+            visualEffectView.trailingAnchor.constraint(equalTo: movieCoverImageView.trailingAnchor),
         ])
-        animator2 = UIViewPropertyAnimator(duration: 3.0, curve: .linear, animations: { [visualEffectView] in
+        propertyAnimator = UIViewPropertyAnimator(duration: 3.0, curve: .linear, animations: { [visualEffectView] in
             visualEffectView.effect = UIBlurEffect(style: .light)
         })
     }
@@ -199,61 +243,66 @@ final class HeaderView: UICollectionReusableView {
     }
 
     private func addLogoImage() {
-        addSubview(logoImage)
-        logoImage.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(logoImageView)
+        logoImageView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            logoImage.bottomAnchor.constraint(equalTo: movieName.topAnchor, constant: 18),
-            logoImage.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 1 / 3),
-            logoImage.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 3 / 4),
-            logoImage.centerXAnchor.constraint(equalTo: centerXAnchor),
+            logoImageView.bottomAnchor.constraint(equalTo: movieNameLabel.topAnchor, constant: 18),
+            logoImageView.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 1 / 3),
+            logoImageView.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 3 / 4),
+            logoImageView.centerXAnchor.constraint(equalTo: centerXAnchor),
         ])
     }
 
-    private func setupViews() {
-        addCoverImage()
-        addBlurEffect()
-        addGradient()
-        addSubview(movieName)
-        movieName.translatesAutoresizingMaskIntoConstraints = false
+    private func setupMovieNameLabel() {
+        addSubview(movieNameLabel)
+        movieNameLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            movieName.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            movieName.trailingAnchor.constraint(equalTo: trailingAnchor),
-            movieName.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -110)
+            movieNameLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            movieNameLabel.trailingAnchor.constraint(equalTo: trailingAnchor),
+            movieNameLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -110)
         ])
-        addSubview(movieGenres)
-        movieGenres.translatesAutoresizingMaskIntoConstraints = false
+    }
+
+    private func setupMovieGenresLabel() {
+        addSubview(movieGenresLabel)
+        movieGenresLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            movieGenres.topAnchor.constraint(equalTo: movieName.bottomAnchor, constant: 0),
-            movieGenres.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            movieGenres.trailingAnchor.constraint(equalTo: trailingAnchor),
+            movieGenresLabel.topAnchor.constraint(equalTo: movieNameLabel.bottomAnchor, constant: 0),
+            movieGenresLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            movieGenresLabel.trailingAnchor.constraint(equalTo: trailingAnchor),
         ])
-        addSubview(movieYear)
-        addSubview(timeIcon)
-        addSubview(movieDuration)
-        movieYear.translatesAutoresizingMaskIntoConstraints = false
-        timeIcon.translatesAutoresizingMaskIntoConstraints = false
-        movieDuration.translatesAutoresizingMaskIntoConstraints = false
+    }
+
+    private func setupMovieYearDurationLabels() {
+        addSubview(movieYearLabel)
+        addSubview(timeIconImageView)
+        addSubview(movieDurationLabel)
+        movieYearLabel.translatesAutoresizingMaskIntoConstraints = false
+        timeIconImageView.translatesAutoresizingMaskIntoConstraints = false
+        movieDurationLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            movieYear.topAnchor.constraint(equalTo: movieGenres.bottomAnchor, constant: 5),
-            movieYear.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            movieYear.widthAnchor.constraint(equalToConstant: 70),
+            movieYearLabel.topAnchor.constraint(equalTo: movieGenresLabel.bottomAnchor, constant: 5),
+            movieYearLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            movieYearLabel.widthAnchor.constraint(equalToConstant: 70),
 
-            timeIcon.leadingAnchor.constraint(equalTo: movieYear.trailingAnchor, constant: 0),
-            timeIcon.centerYAnchor.constraint(equalTo: movieYear.centerYAnchor),
-            timeIcon.widthAnchor.constraint(equalToConstant: 14),
-            timeIcon.heightAnchor.constraint(equalToConstant: 14),
+            timeIconImageView.leadingAnchor.constraint(equalTo: movieYearLabel.trailingAnchor, constant: 0),
+            timeIconImageView.centerYAnchor.constraint(equalTo: movieYearLabel.centerYAnchor),
+            timeIconImageView.widthAnchor.constraint(equalToConstant: 14),
+            timeIconImageView.heightAnchor.constraint(equalToConstant: 14),
 
-            movieDuration.leadingAnchor.constraint(equalTo: timeIcon.trailingAnchor, constant: 5),
-            movieDuration.centerYAnchor.constraint(equalTo: movieYear.centerYAnchor),
-            movieDuration.trailingAnchor.constraint(equalTo: trailingAnchor)
+            movieDurationLabel.leadingAnchor.constraint(equalTo: timeIconImageView.trailingAnchor, constant: 5),
+            movieDurationLabel.centerYAnchor.constraint(equalTo: movieYearLabel.centerYAnchor),
+            movieDurationLabel.trailingAnchor.constraint(equalTo: trailingAnchor)
         ])
+    }
 
+    private func setupVoteRatingViews() {
         voteLabel.translatesAutoresizingMaskIntoConstraints = false
         ratingView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(voteLabel)
         addSubview(ratingView)
         NSLayoutConstraint.activate([
-            voteLabel.topAnchor.constraint(equalTo: movieYear.bottomAnchor, constant: 5),
+            voteLabel.topAnchor.constraint(equalTo: movieYearLabel.bottomAnchor, constant: 5),
             voteLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
             voteLabel.widthAnchor.constraint(equalToConstant: 25),
 
@@ -262,7 +311,9 @@ final class HeaderView: UICollectionReusableView {
             ratingView.widthAnchor.constraint(equalToConstant: 80),
             ratingView.heightAnchor.constraint(equalToConstant: 14),
         ])
+    }
 
+    private func setupWatchButton() {
         addSubview(watchButton)
         watchButton.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -271,24 +322,37 @@ final class HeaderView: UICollectionReusableView {
             watchButton.heightAnchor.constraint(equalToConstant: 44),
             watchButton.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 2 / 3),
         ])
+    }
 
-        addSubview(downloadImage)
-        addSubview(bookmarkImage)
-        downloadImage.translatesAutoresizingMaskIntoConstraints = false
-        bookmarkImage.translatesAutoresizingMaskIntoConstraints = false
+    private func setupDownloadBookmarkImageViews() {
+        addSubview(downloadImageView)
+        addSubview(bookmarkImageView)
+        downloadImageView.translatesAutoresizingMaskIntoConstraints = false
+        bookmarkImageView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            bookmarkImage.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
-            bookmarkImage.widthAnchor.constraint(equalToConstant: 44),
-            bookmarkImage.heightAnchor.constraint(equalToConstant: 28),
-            bookmarkImage.centerYAnchor.constraint(equalTo: watchButton.centerYAnchor),
+            bookmarkImageView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            bookmarkImageView.widthAnchor.constraint(equalToConstant: 44),
+            bookmarkImageView.heightAnchor.constraint(equalToConstant: 28),
+            bookmarkImageView.centerYAnchor.constraint(equalTo: watchButton.centerYAnchor),
 
-            downloadImage.trailingAnchor.constraint(equalTo: bookmarkImage.leadingAnchor, constant: 5),
-            downloadImage.widthAnchor.constraint(equalToConstant: 44),
-            downloadImage.heightAnchor.constraint(equalToConstant: 28),
-            downloadImage.centerYAnchor.constraint(equalTo: watchButton.centerYAnchor),
+            downloadImageView.trailingAnchor.constraint(equalTo: bookmarkImageView.leadingAnchor, constant: 5),
+            downloadImageView.widthAnchor.constraint(equalToConstant: 44),
+            downloadImageView.heightAnchor.constraint(equalToConstant: 28),
+            downloadImageView.centerYAnchor.constraint(equalTo: watchButton.centerYAnchor),
 
         ])
+    }
 
+    private func setupViews() {
+        addCoverImage()
+        addBlurEffect()
+        addGradient()
+        setupMovieNameLabel()
+        setupMovieGenresLabel()
+        setupMovieYearDurationLabels()
+        setupVoteRatingViews()
+        setupWatchButton()
+        setupDownloadBookmarkImageViews()
         addLogoImage()
     }
 

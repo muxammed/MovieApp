@@ -25,6 +25,8 @@ struct Constants {
     static let appTitle = "MOVIE"
     static let appSubTitle = "app"
     static let introBack = "onboardback5"
+    static let searchIconName = "magnifyingglass"
+    static let clockImageName = "clock"
 
     // MARK: - Colors names
 

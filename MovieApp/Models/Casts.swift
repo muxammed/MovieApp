@@ -4,7 +4,12 @@
 /// Casts
 struct Casts: Codable {
     let id: Int
-    let cast: [Cast]
+    let casts: [Cast]
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case casts = "cast"
+    }
 }
 
 /// Cats

@@ -12,18 +12,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     ) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         let window = UIWindow(windowScene: windowScene)
-        // ViewController()
         let navController = UINavigationController(rootViewController: IntroViewController())
         navController.navigationBar.backgroundColor = .clear
         navController.navigationBar.tintColor = .clear
 
-        UINavigationBar.appearance().backgroundColor = .clear // backgorund color with gradient
-        // or
+        UINavigationBar.appearance().backgroundColor = .clear
         UINavigationBar.appearance().barTintColor = UIColor.clear
         UINavigationBar.appearance().shadowImage = UIImage()
-        // solid color
-//        UINavigationBar.appearance().isTranslucent = false
-//        UIBarButtonItem.appearance().tintColor = .magenta
 
         window.rootViewController = navController
         self.window = window

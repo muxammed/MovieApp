@@ -90,12 +90,12 @@ private extension TransitionManager {
     ) {
         guard
             let movieCell = fromViewController.currentCell,
-            let movieCoverImageView = fromViewController.currentCell?.moviePhoto
+            let movieCoverImageView = fromViewController.currentCell?.getMoviePhotoImageView()
 
         else { return }
         toViewController.navigationController?.navigationBar.isHidden = true
 
-        let detailsImageView = toViewController.headerView.movieCover
+        let detailsImageView = toViewController.headerView.movieCoverImageView
         toViewController.view.layoutIfNeeded()
 
         let containerView = context.containerView
@@ -146,7 +146,7 @@ private extension TransitionManager {
         }
 
         animator.addCompletion { position in
-            toViewController.headerView.animator2.fractionComplete = 0
+            toViewController.headerView.setAnimationFraction(value: 0)
             snapshotMovieCoverImageView.removeFromSuperview()
             snapshotContentView.removeFromSuperview()
             context.completeTransition(position == .end)

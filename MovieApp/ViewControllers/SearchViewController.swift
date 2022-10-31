@@ -7,8 +7,8 @@ import UIKit
 final class SearchViewController: UIViewController {
     // MARK: - Visual Components
 
-    let filterView = UIView()
-    let buttonOne: UIButton = {
+    private let filterView = UIView()
+    private let popularButton: UIButton = {
         let button = UIButton()
         button.layer.cornerRadius = 15
         let attrs = [
@@ -23,7 +23,7 @@ final class SearchViewController: UIViewController {
         return button
     }()
 
-    let buttonDwa: UIButton = {
+    private let topRatedButton: UIButton = {
         let button = UIButton()
         button.layer.cornerRadius = 15
         let attrs = [
@@ -38,7 +38,7 @@ final class SearchViewController: UIViewController {
         return button
     }()
 
-    let buttonTri: UIButton = {
+    private let upcomingButton: UIButton = {
         let button = UIButton()
         button.layer.cornerRadius = 15
         let attrs = [
@@ -53,7 +53,7 @@ final class SearchViewController: UIViewController {
         return button
     }()
 
-    lazy var moviesCollection: UICollectionView = {
+    private lazy var moviesCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
         layout.minimumLineSpacing = 10
@@ -62,18 +62,25 @@ final class SearchViewController: UIViewController {
         cv.contentInset = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
         cv.delegate = self
         cv.dataSource = self
-        cv.register(MovieCell.self, forCellWithReuseIdentifier: cellid)
+        cv.register(MovieViewCell.self, forCellWithReuseIdentifier: cellid)
         cv.backgroundColor = .black
         return cv
     }()
 
     // MARK: - Public Properties
 
-    var movies: [Result] = []
-    let cellid = "cellid"
-    var currentCell: MovieCell?
-    let transitionManager = TransitionManager(duration: 0.7)
-    var loadedPage = 1
+    var currentCell: MovieViewCell?
+
+    // MARK: - Private Properties
+
+    let attrs = [
+        NSAttributedString.Key.font: UIFont(name: Constants.chilliMedium, size: 16),
+        NSAttributedString.Key.foregroundColor: UIColor.white
+    ]
+    private var movies: [MovieShortDetails] = []
+    private let cellid = "cellid"
+    private let transitionManager = TransitionManager(duration: 0.7)
+    private var loadedPage = 1
 
     // MARK: - Life cycle
 
@@ -91,19 +98,19 @@ final class SearchViewController: UIViewController {
 
     // MARK: - Public methods
 
-    @objc func loadOne() {
+    @objc func loadPopularAction() {
         loadFilms(
             what: "https://api.themoviedb.org/3/movie/popular?api_key=a24779cd5414af1e87f78fe4ff4de25c&language=en-US&page=1"
         )
     }
 
-    @objc func loadDwa() {
+    @objc func loadTopRatedAction() {
         loadFilms(
             what: "https://api.themoviedb.org/3/movie/top_rated?api_key=a24779cd5414af1e87f78fe4ff4de25c&language=en-US&page=1"
         )
     }
 
-    @objc func loadTri() {
+    @objc func loadUpcomingAction() {
         loadFilms(
             what: "https://api.themoviedb.org/3/movie/upcoming?api_key=a24779cd5414af1e87f78fe4ff4de25c&language=en-US&page=1"
         )
@@ -113,57 +120,81 @@ final class SearchViewController: UIViewController {
 
     private func setupViews() {
         navigationItem.backButtonTitle = ""
-        moviesCollection.translatesAutoresizingMaskIntoConstraints = false
+        moviesCollectionView.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = UIColor(named: Constants.ownDarkestColor)
         filterView.translatesAutoresizingMaskIntoConstraints = false
-        buttonOne.translatesAutoresizingMaskIntoConstraints = false
-        buttonDwa.translatesAutoresizingMaskIntoConstraints = false
-        buttonTri.translatesAutoresizingMaskIntoConstraints = false
+        popularButton.translatesAutoresizingMaskIntoConstraints = false
+        topRatedButton.translatesAutoresizingMaskIntoConstraints = false
+        upcomingButton.translatesAutoresizingMaskIntoConstraints = false
 
         filterView.backgroundColor = UIColor(named: Constants.ownDarkestColor)
         view.addSubview(filterView)
-        filterView.addSubview(buttonOne)
-        filterView.addSubview(buttonDwa)
-        filterView.addSubview(buttonTri)
-        view.addSubview(moviesCollection)
+        filterView.addSubview(popularButton)
+        filterView.addSubview(topRatedButton)
+        filterView.addSubview(upcomingButton)
+        view.addSubview(moviesCollectionView)
         loadFilms(
             what: "https://api.themoviedb.org/3/trending/movie/day?api_key=a24779cd5414af1e87f78fe4ff4de25c&language=en&page=\(loadedPage)"
         )
     }
 
     private func setupLayouts() {
+        filterViewConstraints()
+        topRatedButtonConstraints()
+        popularButtonConstraints()
+        upcomingButtonConstraints()
+        moviesCollectionConstraints()
+    }
+
+    private func filterViewConstraints() {
         NSLayoutConstraint.activate([
             filterView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             filterView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             filterView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             filterView.heightAnchor.constraint(equalToConstant: 50),
+        ])
+    }
 
-            buttonDwa.centerYAnchor.constraint(equalTo: filterView.centerYAnchor),
-            buttonDwa.heightAnchor.constraint(equalToConstant: 30),
-            buttonDwa.centerXAnchor.constraint(equalTo: filterView.centerXAnchor),
-            buttonDwa.widthAnchor.constraint(equalToConstant: 120),
+    private func topRatedButtonConstraints() {
+        NSLayoutConstraint.activate([
+            topRatedButton.centerYAnchor.constraint(equalTo: filterView.centerYAnchor),
+            topRatedButton.heightAnchor.constraint(equalToConstant: 30),
+            topRatedButton.centerXAnchor.constraint(equalTo: filterView.centerXAnchor),
+            topRatedButton.widthAnchor.constraint(equalToConstant: 120),
+        ])
+    }
 
-            buttonOne.centerYAnchor.constraint(equalTo: filterView.centerYAnchor),
-            buttonOne.heightAnchor.constraint(equalToConstant: 30),
-            buttonOne.trailingAnchor.constraint(equalTo: buttonDwa.leadingAnchor, constant: -10),
-            buttonOne.widthAnchor.constraint(equalToConstant: 120),
+    private func popularButtonConstraints() {
+        NSLayoutConstraint.activate([
+            popularButton.centerYAnchor.constraint(equalTo: filterView.centerYAnchor),
+            popularButton.heightAnchor.constraint(equalToConstant: 30),
+            popularButton.trailingAnchor.constraint(equalTo: topRatedButton.leadingAnchor, constant: -10),
+            popularButton.widthAnchor.constraint(equalToConstant: 120),
+        ])
+    }
 
-            buttonTri.centerYAnchor.constraint(equalTo: filterView.centerYAnchor),
-            buttonTri.heightAnchor.constraint(equalToConstant: 30),
-            buttonTri.leadingAnchor.constraint(equalTo: buttonDwa.trailingAnchor, constant: 10),
-            buttonTri.widthAnchor.constraint(equalToConstant: 120),
+    private func upcomingButtonConstraints() {
+        NSLayoutConstraint.activate([
+            upcomingButton.centerYAnchor.constraint(equalTo: filterView.centerYAnchor),
+            upcomingButton.heightAnchor.constraint(equalToConstant: 30),
+            upcomingButton.leadingAnchor.constraint(equalTo: topRatedButton.trailingAnchor, constant: 10),
+            upcomingButton.widthAnchor.constraint(equalToConstant: 120),
+        ])
+    }
 
-            moviesCollection.topAnchor.constraint(equalTo: filterView.bottomAnchor),
-            moviesCollection.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            moviesCollection.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            moviesCollection.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+    private func moviesCollectionConstraints() {
+        NSLayoutConstraint.activate([
+            moviesCollectionView.topAnchor.constraint(equalTo: filterView.bottomAnchor),
+            moviesCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            moviesCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            moviesCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
         ])
     }
 
     private func addTargest() {
-        buttonOne.addTarget(self, action: #selector(loadOne), for: .touchUpInside)
-        buttonDwa.addTarget(self, action: #selector(loadDwa), for: .touchUpInside)
-        buttonTri.addTarget(self, action: #selector(loadTri), for: .touchUpInside)
+        popularButton.addTarget(self, action: #selector(loadPopularAction), for: .touchUpInside)
+        topRatedButton.addTarget(self, action: #selector(loadTopRatedAction), for: .touchUpInside)
+        upcomingButton.addTarget(self, action: #selector(loadUpcomingAction), for: .touchUpInside)
     }
 
     private func configNavController() {
@@ -178,7 +209,6 @@ final class SearchViewController: UIViewController {
                 string: what
             )
         else { return }
-        print(url)
         let request = NSMutableURLRequest(url: url)
         request.httpMethod = "GET"
         let task = URLSession.shared.dataTask(with: request as URLRequest) { data, _, error in
@@ -190,7 +220,7 @@ final class SearchViewController: UIViewController {
                         let res = try JSONDecoder().decode(MovieListResponse.self, from: data)
                         self.movies = res.results
                         DispatchQueue.main.async {
-                            self.moviesCollection.reloadData()
+                            self.moviesCollectionView.reloadData()
                         }
                     } catch {
                         print(error)
@@ -199,6 +229,17 @@ final class SearchViewController: UIViewController {
             }
         }
         task.resume()
+    }
+
+    private func goToDetails(with indexPath: IndexPath) {
+        if let currentCell = moviesCollectionView.cellForItem(at: indexPath) as? MovieViewCell {
+            self.currentCell = currentCell
+            navigationController?.delegate = transitionManager
+            let detailsViewController = DetailsViewController()
+            detailsViewController.movieImage = currentCell.getMoviePhotoImageView().image ?? UIImage()
+            detailsViewController.currentMovie = movies[indexPath.item]
+            navigationController?.pushViewController(detailsViewController, animated: true)
+        }
     }
 }
 
@@ -212,7 +253,10 @@ extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSo
         _ collectionView: UICollectionView,
         cellForItemAt indexPath: IndexPath
     ) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: cellid, for: indexPath) as? MovieCell
+        guard let cell = collectionView.dequeueReusableCell(
+            withReuseIdentifier: cellid,
+            for: indexPath
+        ) as? MovieViewCell
         else { return UICollectionViewCell() }
         cell.configure(with: movies[indexPath.row])
         cell.backgroundColor = .white
@@ -221,14 +265,7 @@ extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSo
     }
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if let currentCell = moviesCollection.cellForItem(at: indexPath) as? MovieCell {
-            self.currentCell = currentCell
-            navigationController?.delegate = transitionManager
-            let detailsViewController = DetailsViewController()
-            detailsViewController.movieImage = currentCell.moviePhoto.image ?? UIImage()
-            detailsViewController.currentMovie = movies[indexPath.item]
-            navigationController?.pushViewController(detailsViewController, animated: true)
-        }
+        goToDetails(with: indexPath)
     }
 }
 

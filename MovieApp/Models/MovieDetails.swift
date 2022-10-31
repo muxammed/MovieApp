@@ -1,16 +1,16 @@
-// Details.swift
+// MovieDetails.swift
 // Copyright © RoadMap. All rights reserved.
 
-import CoreGraphics
+import UIKit
 
 /// Details
-struct Details: Codable {
+struct MovieDetails: Codable {
     let genres: [Genre]
     let overview: String
     let productionCountries: [Country]
     let releaseDate: String
     let runtime: Int
-    let voteAverage: CGFloat
+    let voteAverage: CGFloat // только изза этого импортировал UIKit
 
     enum CodingKeys: String, CodingKey {
         case genres, overview, runtime

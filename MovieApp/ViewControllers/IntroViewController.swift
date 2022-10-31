@@ -7,7 +7,7 @@ import UIKit
 final class IntroViewController: UIViewController {
     // MARK: - Visual Components
 
-    let backView: UIImageView = {
+    private let backImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
         imageView.image = UIImage(named: Constants.introBack)
@@ -16,7 +16,7 @@ final class IntroViewController: UIViewController {
         return imageView
     }()
 
-    let moveNext: UIButton = {
+    private let moveNextButton: UIButton = {
         let button = UIButton()
         let attrs = [
             NSAttributedString.Key.font: UIFont(name: Constants.chilliBold, size: 15),
@@ -29,13 +29,13 @@ final class IntroViewController: UIViewController {
         return button
     }()
 
-    let darkView: UIView = {
+    private let darkView: UIView = {
         let view = UIView()
         view.makeGradient(from: .black, to: .clear)
         return view
     }()
 
-    let onboardLabel: UILabel = {
+    private let onboardLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont(name: Constants.chilliMedium, size: 24)
         label.textColor = .white
@@ -43,7 +43,7 @@ final class IntroViewController: UIViewController {
         return label
     }()
 
-    let onboardSubLabel: UILabel = {
+    private let onboardSubLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont(name: Constants.chilliRegular, size: 16)
         label.textColor = .white
@@ -52,7 +52,7 @@ final class IntroViewController: UIViewController {
         return label
     }()
 
-    let appTitleLabel: UILabel = {
+    private let appTitleLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont(name: Constants.chilliBold, size: 42)
         label.textColor = UIColor(named: Constants.ownYellowColor)
@@ -61,7 +61,7 @@ final class IntroViewController: UIViewController {
         return label
     }()
 
-    let appSubTitleLabel: UILabel = {
+    private let appSubTitleLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont(name: Constants.chilliBold, size: 30)
         label.textColor = .white
@@ -72,10 +72,10 @@ final class IntroViewController: UIViewController {
 
     // MARK: - Public Properties
 
-    var currentPage = 0
-    var backTopAnchor = NSLayoutConstraint()
-    var backLeadingAnchor = NSLayoutConstraint()
-    var darkViewHeight = NSLayoutConstraint()
+    private var currentPage = 0
+    private var backImViewTopAnchor = NSLayoutConstraint()
+    private var backImViewLeadAnchor = NSLayoutConstraint()
+    private var darkViewHeight = NSLayoutConstraint()
 
     // MARK: - Life cycle
 
@@ -87,9 +87,7 @@ final class IntroViewController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        for subView in darkView.subviews {
-            subView.alpha = 0
-        }
+        setAlphaToViews()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -101,8 +99,8 @@ final class IntroViewController: UIViewController {
 
     @objc func moveNextAction() {
         if currentPage <= 1 {
-            backLeadingAnchor.constant -= view.frame.width
-            backTopAnchor.constant -= (view.frame.width)
+            backImViewLeadAnchor.constant -= view.frame.width
+            backImViewTopAnchor.constant -= (view.frame.width)
             darkViewHeight.constant = -(view.frame.height)
 
             UIView.animate(
@@ -143,11 +141,17 @@ final class IntroViewController: UIViewController {
         view.addGestureRecognizer(swipeRight)
     }
 
+    private func setAlphaToViews() {
+        for subView in darkView.subviews {
+            subView.alpha = 0
+        }
+    }
+
     private func setupView() {
         view.backgroundColor = UIColor(named: Constants.ownDarkerColor)
-        view.addSubview(backView)
+        view.addSubview(backImageView)
         view.addSubview(darkView)
-        darkView.addSubview(moveNext)
+        darkView.addSubview(moveNextButton)
         darkView.addSubview(onboardLabel)
         darkView.addSubview(onboardSubLabel)
         darkView.addSubview(appTitleLabel)
@@ -160,13 +164,13 @@ final class IntroViewController: UIViewController {
             subView.translatesAutoresizingMaskIntoConstraints = false
         }
 
-        moveNext.addTarget(self, action: #selector(moveNextAction), for: .touchUpInside)
+        moveNextButton.addTarget(self, action: #selector(moveNextAction), for: .touchUpInside)
     }
 
     private func moveBackAction() {
         if currentPage >= 1 {
-            backLeadingAnchor.constant += view.frame.width
-            backTopAnchor.constant += (view.frame.width)
+            backImViewLeadAnchor.constant += view.frame.width
+            backImViewTopAnchor.constant += (view.frame.width)
 
             UIView.animate(
                 withDuration: 0.7,
@@ -213,54 +217,88 @@ final class IntroViewController: UIViewController {
     }
 
     private func layoutSetup() {
-        moveNext.translatesAutoresizingMaskIntoConstraints = false
+        moveNextButton.translatesAutoresizingMaskIntoConstraints = false
+        backImageViewConstraints()
+        moveNextButtonConstraints()
+        darkViewConstraints()
+        onboardLabelConstraints()
+        onboardSubLabelConstraints()
+        appTitleLabelConstraints()
+        appSubTitleLabelConstraints()
+        animateAlpha()
+        animateAlphaToVisible()
+    }
 
-        let backWidth = view.frame.width * 3
-        let backHeight = view.frame.height + (view.frame.width * 2)
-        backTopAnchor = backView.topAnchor.constraint(equalTo: view.topAnchor, constant: view.frame.width)
-        backLeadingAnchor = backView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: view.frame.width)
-        darkViewHeight = darkView.heightAnchor.constraint(equalTo: view.heightAnchor, constant: -(view.frame.height))
+    private func moveNextButtonConstraints() {
         NSLayoutConstraint.activate([
-            backTopAnchor,
-            backLeadingAnchor,
-            backView.widthAnchor.constraint(equalToConstant: backWidth),
-            backView.heightAnchor.constraint(equalToConstant: backHeight),
-            moveNext.trailingAnchor.constraint(equalTo: darkView.trailingAnchor, constant: -30),
-            moveNext.bottomAnchor.constraint(equalTo: darkView.bottomAnchor, constant: -50),
-            moveNext.widthAnchor.constraint(equalToConstant: 100),
-            moveNext.heightAnchor.constraint(equalToConstant: 34),
+            moveNextButton.trailingAnchor.constraint(equalTo: darkView.trailingAnchor, constant: -30),
+            moveNextButton.bottomAnchor.constraint(equalTo: darkView.bottomAnchor, constant: -50),
+            moveNextButton.widthAnchor.constraint(equalToConstant: 100),
+            moveNextButton.heightAnchor.constraint(equalToConstant: 34),
+        ])
+    }
 
+    private func darkViewConstraints() {
+        NSLayoutConstraint.activate([
             darkView.topAnchor.constraint(equalTo: view.topAnchor),
             darkView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             darkView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            darkView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            darkView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
+    }
 
+    private func onboardLabelConstraints() {
+        NSLayoutConstraint.activate([
             onboardLabel.leadingAnchor.constraint(equalTo: darkView.leadingAnchor, constant: 16),
             onboardLabel.trailingAnchor.constraint(equalTo: darkView.trailingAnchor, constant: -16),
             onboardLabel.bottomAnchor.constraint(equalTo: darkView.bottomAnchor, constant: -140),
+        ])
+    }
 
+    private func onboardSubLabelConstraints() {
+        NSLayoutConstraint.activate([
             onboardSubLabel.topAnchor.constraint(equalTo: onboardLabel.bottomAnchor, constant: 4),
             onboardSubLabel.leadingAnchor.constraint(equalTo: darkView.leadingAnchor, constant: 16),
             onboardSubLabel.trailingAnchor.constraint(equalTo: darkView.trailingAnchor, constant: -16),
+        ])
+    }
 
+    private func appTitleLabelConstraints() {
+        NSLayoutConstraint.activate([
             appTitleLabel.topAnchor.constraint(equalTo: darkView.topAnchor, constant: 60),
             appTitleLabel.leadingAnchor.constraint(equalTo: darkView.leadingAnchor),
             appTitleLabel.trailingAnchor.constraint(equalTo: darkView.trailingAnchor),
+        ])
+    }
 
+    private func appSubTitleLabelConstraints() {
+        NSLayoutConstraint.activate([
             appSubTitleLabel.topAnchor.constraint(equalTo: appTitleLabel.bottomAnchor, constant: -20),
             appSubTitleLabel.leadingAnchor.constraint(equalTo: darkView.leadingAnchor),
             appSubTitleLabel.trailingAnchor.constraint(equalTo: darkView.trailingAnchor),
         ])
+    }
 
-        UIView.animate(withDuration: 0.7, delay: 0.4, options: UIView.AnimationOptions.curveEaseIn) {
-            self.backView.alpha = 1
-        } completion: { _ in
-            print("bitti")
-        }
+    private func backImageViewConstraints() {
+        let backWidth = view.frame.width * 3
+        let backHeight = view.frame.height + (view.frame.width * 2)
+        let viewWidth = view.frame.width
+        backImViewTopAnchor = backImageView.topAnchor.constraint(equalTo: view.topAnchor, constant: viewWidth)
+        backImViewLeadAnchor = backImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: viewWidth)
+        darkViewHeight = darkView.heightAnchor.constraint(equalTo: view.heightAnchor, constant: -(view.frame.height))
 
+        NSLayoutConstraint.activate([
+            backImViewTopAnchor,
+            backImViewLeadAnchor,
+            backImageView.widthAnchor.constraint(equalToConstant: backWidth),
+            backImageView.heightAnchor.constraint(equalToConstant: backHeight),
+        ])
+    }
+
+    private func animateAlphaToVisible() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.backLeadingAnchor.constant = 0
-            self.backTopAnchor.constant = 0
+            self.backImViewLeadAnchor.constant = 0
+            self.backImViewTopAnchor.constant = 0
             self.darkView.backgroundColor = .clear
             self.darkView.makeGradient(from: .clear, to: .black)
 
@@ -281,19 +319,12 @@ final class IntroViewController: UIViewController {
             }
         }
     }
-}
 
-extension UIView {
-    func makeGradient(from: UIColor, to: UIColor) {
-        let gradient = CAGradientLayer()
-        gradient.frame = bounds
-        gradient.colors = [to.cgColor, from.cgColor, to.cgColor, to.cgColor]
-        let point4 = 0.0
-        let point1 = 0.3
-        let point2 = 0.9
-        let point3 = 1.0
-        gradient.locations = [point4 as NSNumber, point1 as NSNumber, point2 as NSNumber, point3 as NSNumber]
-
-        layer.insertSublayer(gradient, at: 0)
+    private func animateAlpha() {
+        UIView.animate(withDuration: 0.7, delay: 0.4, options: UIView.AnimationOptions.curveEaseIn) {
+            self.backImageView.alpha = 1
+        } completion: { _ in
+            print("bitti")
+        }
     }
 }

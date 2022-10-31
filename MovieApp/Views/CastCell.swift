@@ -7,7 +7,7 @@ import UIKit
 final class CastCell: UICollectionViewCell {
     // MARK: - Visual components
 
-    let castImage: UIImageView = {
+    private let castImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleToFill
         imageView.clipsToBounds = true
@@ -15,7 +15,7 @@ final class CastCell: UICollectionViewCell {
         return imageView
     }()
 
-    let castName: UILabel = {
+    private let castNameLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
         label.font = UIFont(name: Constants.chilliMedium, size: 15)
@@ -23,7 +23,7 @@ final class CastCell: UICollectionViewCell {
         return label
     }()
 
-    let castCharacter: UILabel = {
+    private let castCharacterLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(named: "ownAk")
         label.font = UIFont(name: Constants.chilliRegular, size: 12)
@@ -31,7 +31,7 @@ final class CastCell: UICollectionViewCell {
         return label
     }()
 
-    let centeredView = UIView()
+    private let centeredView = UIView()
 
     // MARK: - Initialisators
 
@@ -47,42 +47,70 @@ final class CastCell: UICollectionViewCell {
 
     // MARK: - Public methods
 
+    func configure(with cast: Cast) {
+        castNameLabel.text = cast.name
+        castCharacterLabel.text = cast.character
+        castImageView.downloaded(
+            from: "https://image.tmdb.org/t/p/w500\(cast.profilePath ?? "")",
+            contentMode: .scaleAspectFill
+        )
+    }
+
     override func layoutSubviews() {
         super.layoutSubviews()
-        castImage.layer.cornerRadius = castImage.frame.height / 2
+        castImageView.layer.cornerRadius = castImageView.frame.height / 2
     }
 
     // MARK: - Private methods
 
     private func setupViews() {
-        castImage.translatesAutoresizingMaskIntoConstraints = false
-        castName.translatesAutoresizingMaskIntoConstraints = false
-        castCharacter.translatesAutoresizingMaskIntoConstraints = false
+        castImageView.translatesAutoresizingMaskIntoConstraints = false
+        castNameLabel.translatesAutoresizingMaskIntoConstraints = false
+        castCharacterLabel.translatesAutoresizingMaskIntoConstraints = false
         centeredView.translatesAutoresizingMaskIntoConstraints = false
 
-        addSubview(castImage)
+        addSubview(castImageView)
         addSubview(centeredView)
-        centeredView.addSubview(castName)
-        centeredView.addSubview(castCharacter)
+        centeredView.addSubview(castNameLabel)
+        centeredView.addSubview(castCharacterLabel)
 
+        castImageViewConstraints()
+        centeredViewConstraints()
+        castNameLabelConstraints()
+        castCharacterLabelConstraints()
+    }
+
+    private func castImageViewConstraints() {
         NSLayoutConstraint.activate([
-            castImage.leadingAnchor.constraint(equalTo: leadingAnchor),
-            castImage.centerYAnchor.constraint(equalTo: centerYAnchor),
-            castImage.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 1 / 2.5),
-            castImage.heightAnchor.constraint(equalTo: widthAnchor, multiplier: 1 / 2.5),
+            castImageView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            castImageView.centerYAnchor.constraint(equalTo: centerYAnchor),
+            castImageView.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 1 / 2.5),
+            castImageView.heightAnchor.constraint(equalTo: widthAnchor, multiplier: 1 / 2.5),
+        ])
+    }
 
-            centeredView.centerYAnchor.constraint(equalTo: castImage.centerYAnchor),
-            centeredView.leadingAnchor.constraint(equalTo: castImage.trailingAnchor, constant: 5),
+    private func centeredViewConstraints() {
+        NSLayoutConstraint.activate([
+            centeredView.centerYAnchor.constraint(equalTo: castImageView.centerYAnchor),
+            centeredView.leadingAnchor.constraint(equalTo: castImageView.trailingAnchor, constant: 5),
             centeredView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -5),
+        ])
+    }
 
-            castName.topAnchor.constraint(equalTo: centeredView.topAnchor),
-            castName.leadingAnchor.constraint(equalTo: centeredView.leadingAnchor),
-            castName.trailingAnchor.constraint(equalTo: centeredView.trailingAnchor),
+    private func castNameLabelConstraints() {
+        NSLayoutConstraint.activate([
+            castNameLabel.topAnchor.constraint(equalTo: centeredView.topAnchor),
+            castNameLabel.leadingAnchor.constraint(equalTo: centeredView.leadingAnchor),
+            castNameLabel.trailingAnchor.constraint(equalTo: centeredView.trailingAnchor),
+        ])
+    }
 
-            castCharacter.topAnchor.constraint(equalTo: castName.bottomAnchor),
-            castCharacter.leadingAnchor.constraint(equalTo: centeredView.leadingAnchor),
-            castCharacter.bottomAnchor.constraint(equalTo: centeredView.bottomAnchor),
-            castCharacter.trailingAnchor.constraint(equalTo: centeredView.trailingAnchor)
+    private func castCharacterLabelConstraints() {
+        NSLayoutConstraint.activate([
+            castCharacterLabel.topAnchor.constraint(equalTo: castNameLabel.bottomAnchor),
+            castCharacterLabel.leadingAnchor.constraint(equalTo: centeredView.leadingAnchor),
+            castCharacterLabel.bottomAnchor.constraint(equalTo: centeredView.bottomAnchor),
+            castCharacterLabel.trailingAnchor.constraint(equalTo: centeredView.trailingAnchor)
         ])
     }
 }

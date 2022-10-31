@@ -6,14 +6,14 @@ import UIKit
 final class DetailsViewController: UIViewController {
     // MARK: - Visual Components
 
-    let headerImage: UIImageView = {
+    private let headerImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         return imageView
     }()
 
-    lazy var detailsCollectionView: UICollectionView = {
+    private lazy var detailsCollectionView: UICollectionView = {
         let layout = StreacheHeaderLayout()
         layout.scrollDirection = .vertical
         let padding = 20.0
@@ -34,22 +34,25 @@ final class DetailsViewController: UIViewController {
         return collectionView
     }()
 
-    let topView = UIView()
-    let detailsView = UIView()
-    let statusBarView = UIView()
+    private let topView = UIView()
+    private let detailsView = UIView()
+    private let statusBarView = UIView()
 
     // MARK: - Public Properties
 
-    var currentMovie: Result?
-    var currentDetails: Details?
-    var currentCasts: [Cast] = []
-    var movieImage = UIImage()
-    var headerView = HeaderView()
-    var logo: String?
-    let cellid = "cellid"
-    let cellid2 = "cellid2"
-    let cellid3 = "cellid3"
-    let headerId = "headerId"
+    public var currentMovie: MovieShortDetails?
+    public var movieImage = UIImage()
+    public var headerView = HeaderView()
+
+    // MARK: - Private Properties
+
+    private var currentDetails: MovieDetails?
+    private var currentCasts: [Cast] = []
+    private var logo: String?
+    private let cellid = "cellid"
+    private let cellid2 = "cellid2"
+    private let cellid3 = "cellid3"
+    private let headerId = "headerId"
 
     // MARK: - Life cycle
 
@@ -69,7 +72,7 @@ final class DetailsViewController: UIViewController {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        headerView.animator2.stopAnimation(true)
+        stopAnimation()
     }
 
     // MARK: - Public methods
@@ -77,13 +80,17 @@ final class DetailsViewController: UIViewController {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let contentOffsetY = scrollView.contentOffset.y
         if contentOffsetY > 0 {
-            headerView.animator2?.fractionComplete = 0
+            headerView.setAnimationFraction(value: 0)
             return
         }
-        headerView.animator2?.fractionComplete = abs(contentOffsetY) / 150
+        headerView.setAnimationFraction(value: abs(contentOffsetY) / 150)
     }
 
     // MARK: - Private Methods
+
+    private func stopAnimation() {
+        headerView.stopAnimation(value: true)
+    }
 
     private func setupViews() {
         navigationItem.backButtonTitle = ""
@@ -99,8 +106,12 @@ final class DetailsViewController: UIViewController {
         statusBarView.translatesAutoresizingMaskIntoConstraints = false
         statusBarView.alpha = 0
         detailsCollectionView.translatesAutoresizingMaskIntoConstraints = false
-
         detailsCollectionView.contentInsetAdjustmentBehavior = .never
+        detailsCollectionViewSetConstraints()
+        view.layoutIfNeeded()
+    }
+
+    private func detailsCollectionViewSetConstraints() {
         NSLayoutConstraint.activate([
             detailsCollectionView.topAnchor.constraint(equalTo: view.topAnchor),
             detailsCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -108,7 +119,6 @@ final class DetailsViewController: UIViewController {
             detailsCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
         ])
-        view.layoutIfNeeded()
     }
 
     private func loadCasts() {
@@ -127,11 +137,11 @@ final class DetailsViewController: UIViewController {
                     if let data = data {
                         do {
                             let res = try JSONDecoder().decode(Casts.self, from: data)
-                            self.currentCasts = res.cast
+                            self.currentCasts = res.casts
                             DispatchQueue.main.async {
                                 let catsInd = IndexPath(item: 2, section: 0)
                                 if let castsCell = self.detailsCollectionView.cellForItem(at: catsInd) as? CastsCell {
-                                    castsCell.castsCollection.reloadData()
+                                    castsCell.reloadCollectionView()
                                 }
                             }
 
@@ -161,22 +171,13 @@ final class DetailsViewController: UIViewController {
                 } else {
                     if let data = data {
                         do {
-                            let res = try JSONDecoder().decode(Details.self, from: data)
-                            var genresString = ""
-                            for genre in res.genres {
-                                genresString += "\(genre.name)  "
-                            }
+                            let res = try JSONDecoder().decode(MovieDetails.self, from: data)
                             self.currentDetails = res
                             DispatchQueue.main.async {
-                                self.headerView.movieGenres.text = genresString
-                                self.headerView.ratingView.rating = res.voteAverage / 2
-                                let rounded = Double(round(10 * res.voteAverage) / 10)
-                                let splited = res.releaseDate.split(separator: "-")
-                                self.headerView.movieYear.text = "\(splited[0]) USA"
-                                self.headerView.voteLabel.text = "\(rounded)"
+                                self.headerView.setupValues(with: res)
                                 let ind = IndexPath(row: 0, section: 0)
                                 if let descCell = self.detailsCollectionView.cellForItem(at: ind) as? DescriptionCell {
-                                    descCell.descTextLabel.text = res.overview
+                                    descCell.setDescriptionText(text: res.overview)
                                 }
                                 self.detailsCollectionView.reloadData()
                             }
@@ -207,14 +208,13 @@ final class DetailsViewController: UIViewController {
                     if let data = data {
                         do {
                             let res = try JSONDecoder().decode(MovieImages.self, from: data)
-                            if res.logos.count > 0 {
-                                self.logo = res.logos[0].filePath
-                                let logoUrl = "https://image.tmdb.org/t/p/w500\(res.logos[0].filePath ?? "")"
-                                DispatchQueue.main.async {
-                                    self.headerView.logoImage.downloaded(
-                                        from: logoUrl,
-                                        contentMode: .scaleAspectFit
-                                    )
+                            if res.movieLogoImage.count > 0 {
+                                self.logo = res.movieLogoImage[0].movieImagePath
+                                let logoUrl =
+                                    "https://image.tmdb.org/t/p/w500\(res.movieLogoImage[0].movieImagePath ?? "")"
+                                DispatchQueue.main.async { [weak self] in
+                                    guard let self = self else { return }
+                                    self.headerView.setDownloadImageUrl(imageUrl: logoUrl)
                                 }
                             }
 
@@ -230,8 +230,7 @@ final class DetailsViewController: UIViewController {
 
     private func setupMovie() {
         if let currentMovie = currentMovie {
-            headerView.movieName.text = currentMovie.title
-            headerView.ratingView.rating = currentMovie.voteAverage / 2
+            headerView.setupTextValues(movie: currentMovie)
             view.layoutIfNeeded()
         }
     }
@@ -254,17 +253,13 @@ final class DetailsViewController: UIViewController {
         let point3 = 1.0
         gradient.locations = [point4 as NSNumber, point1 as NSNumber, point3 as NSNumber]
         statusBarView.layer.insertSublayer(gradient, at: 0)
+        animateAlphaAnimation()
+    }
 
+    private func animateAlphaAnimation() {
         UIView.animate(withDuration: 0.5) {
             self.statusBarView.alpha = 1
-            self.headerView.movieName.alpha = 1
-            self.headerView.movieGenres.alpha = 1
-            self.headerView.logoImage.alpha = 1
-            self.headerView.movieYear.alpha = 1
-            self.headerView.movieDuration.alpha = 1
-            self.headerView.timeIcon.alpha = 1
-            self.headerView.voteLabel.alpha = 1
-            self.headerView.ratingView.alpha = 1
+            self.headerView.setAlpha(to: 1)
             self.view.layoutIfNeeded()
         }
     }
@@ -286,7 +281,7 @@ extension DetailsViewController: UICollectionViewDelegate, UICollectionViewDataS
                 for: indexPath
             ) as? DescriptionCell {
                 cell.backgroundColor = .black
-                cell.descTextLabel.text = currentDetails?.overview
+                cell.setDescriptionText(text: currentDetails?.overview ?? "")
                 return cell
             }
 
@@ -295,12 +290,7 @@ extension DetailsViewController: UICollectionViewDelegate, UICollectionViewDataS
                 withReuseIdentifier: cellid3,
                 for: indexPath
             ) as? CastsCell {
-                cell.backgroundColor = .black
-                cell.casts = currentCasts
-                DispatchQueue.main.async {
-                    cell.castsCollection.reloadData()
-                    cell.layoutIfNeeded()
-                }
+                cell.configure(with: currentCasts)
                 return cell
             }
 
@@ -323,7 +313,7 @@ extension DetailsViewController: UICollectionViewDelegate, UICollectionViewDataS
             for: indexPath
         ) as? HeaderView) {
             headerView = header
-            headerView.movieCover.image = movieImage
+            headerView.movieCoverImageView.image = movieImage
             return headerView
         }
         return UICollectionReusableView()
@@ -359,18 +349,5 @@ extension DetailsViewController: UICollectionViewDelegateFlowLayout {
             return CGSize(width: collectionView.frame.width - 40, height: 350)
         }
         return CGSize(width: collectionView.frame.width - (2 * 20), height: 50)
-    }
-}
-
-/// UILabel extension что бы подсчитать высоту при заданных шрифта и ширины лейбла
-extension UILabel {
-    func heightForLabel(text: String, font: UIFont, width: CGFloat) -> CGFloat {
-        let label = UILabel(frame: CGRect(x: 0, y: 0, width: width, height: CGFloat.greatestFiniteMagnitude))
-        label.numberOfLines = 0
-        label.lineBreakMode = NSLineBreakMode.byWordWrapping
-        label.font = font
-        label.text = text
-        label.sizeToFit()
-        return label.frame.height
     }
 }

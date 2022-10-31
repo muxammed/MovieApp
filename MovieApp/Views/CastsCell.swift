@@ -6,7 +6,7 @@ import UIKit
 final class CastsCell: UICollectionViewCell {
     // MARK: - Visual components
 
-    let castLabel: UILabel = {
+    private let castLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
         label.font = UIFont(name: Constants.chilliMedium, size: 20)
@@ -14,7 +14,7 @@ final class CastsCell: UICollectionViewCell {
         return label
     }()
 
-    let viewAllLabel: UILabel = {
+    private let viewAllLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
         label.font = UIFont(name: Constants.chilliRegular, size: 16)
@@ -24,7 +24,7 @@ final class CastsCell: UICollectionViewCell {
         return label
     }()
 
-    lazy var castsCollection: UICollectionView = {
+    private lazy var castsCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
         layout.minimumLineSpacing = 0
@@ -38,8 +38,8 @@ final class CastsCell: UICollectionViewCell {
 
     // MARK: - Public properties
 
-    let cellid = "cellid"
-    var casts: [Cast] = []
+    private let cellid = "cellid"
+    private var casts: [Cast] = []
 
     // MARK: - Initialisators
 
@@ -53,30 +53,60 @@ final class CastsCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
 
+    // MARK: - Public methods
+
+    public func configure(with casts: [Cast]) {
+        backgroundColor = .black
+        self.casts = casts
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.castsCollectionView.reloadData()
+            self.layoutIfNeeded()
+        }
+    }
+
+    public func reloadCollectionView() {
+        castsCollectionView.reloadData()
+    }
+
     // MARK: - private methods
 
-    func setupViews() {
+    private func setupViews() {
         addSubview(castLabel)
         addSubview(viewAllLabel)
-        addSubview(castsCollection)
+        addSubview(castsCollectionView)
         castLabel.translatesAutoresizingMaskIntoConstraints = false
         viewAllLabel.translatesAutoresizingMaskIntoConstraints = false
-        castsCollection.translatesAutoresizingMaskIntoConstraints = false
+        castsCollectionView.translatesAutoresizingMaskIntoConstraints = false
 
-        castsCollection.backgroundColor = .black
+        castsCollectionView.backgroundColor = .black
 
+        castLabelConstraints()
+        viewAllLabelConstraints()
+        castsCollectionViewConstraints()
+    }
+
+    private func castLabelConstraints() {
         NSLayoutConstraint.activate([
             castLabel.topAnchor.constraint(equalTo: topAnchor, constant: 0),
             castLabel.leadingAnchor.constraint(equalTo: leadingAnchor),
             castLabel.widthAnchor.constraint(equalTo: viewAllLabel.widthAnchor),
+        ])
+    }
 
+    private func viewAllLabelConstraints() {
+        NSLayoutConstraint.activate([
             viewAllLabel.trailingAnchor.constraint(equalTo: trailingAnchor),
             viewAllLabel.centerYAnchor.constraint(equalTo: castLabel.centerYAnchor),
+        ])
+    }
 
-            castsCollection.topAnchor.constraint(equalTo: castLabel.bottomAnchor, constant: 2),
-            castsCollection.leadingAnchor.constraint(equalTo: leadingAnchor),
-            castsCollection.bottomAnchor.constraint(equalTo: bottomAnchor),
-            castsCollection.trailingAnchor.constraint(equalTo: trailingAnchor)
+    private func castsCollectionViewConstraints() {
+        NSLayoutConstraint.activate([
+            castsCollectionView.topAnchor.constraint(equalTo: castLabel.bottomAnchor, constant: 2),
+            castsCollectionView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            castsCollectionView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            castsCollectionView.trailingAnchor.constraint(equalTo: trailingAnchor)
         ])
     }
 }
@@ -92,12 +122,7 @@ extension CastsCell: UICollectionViewDelegate, UICollectionViewDataSource {
         cellForItemAt indexPath: IndexPath
     ) -> UICollectionViewCell {
         if let cell = collectionView.dequeueReusableCell(withReuseIdentifier: cellid, for: indexPath) as? CastCell {
-            cell.castName.text = casts[indexPath.item].name
-            cell.castCharacter.text = casts[indexPath.item].character
-            cell.castImage.downloaded(
-                from: "https://image.tmdb.org/t/p/w500\(casts[indexPath.item].profilePath ?? "")",
-                contentMode: .scaleAspectFill
-            )
+            cell.configure(with: casts[indexPath.item])
             return cell
         }
         return UICollectionViewCell()

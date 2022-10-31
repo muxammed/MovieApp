@@ -1,18 +1,12 @@
 // Movie.swift
 // Copyright © RoadMap. All rights reserved.
 
-import CoreGraphics
+import UIKit
 
-//
-//  Movie.swift
-//  MovieApp
-//
-//  Created by muxammed on 26.10.2022.
-//
 /// MovieListResponse
 struct MovieListResponse: Codable {
     let page: Int?
-    let results: [Result]
+    let results: [MovieShortDetails]
     let totalPages, totalResults: Int
 
     enum CodingKeys: String, CodingKey {
@@ -23,7 +17,7 @@ struct MovieListResponse: Codable {
 }
 
 /// Result
-struct Result: Codable {
+struct MovieShortDetails: Codable {
     let backdroPath: String
     let id: Int
     let title: String
